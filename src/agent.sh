@@ -1,20 +1,25 @@
 #!/bin/sh
-# Times Frame "What's New" agent — runs ON the frame (OpenWrt/ash).
+# Times Frame "What's New" agent. Runs ON the frame (OpenWrt/ash).
 #
 # Fetches a pre-rendered 800x1280 looping clip over HTTPS and shows it as a
 # fullscreen looping library item with the device clock/weather overlays hidden.
 # The frame does this itself: its own curl (OpenSSL + CA bundle) reaches any
 # host, so no bridge or push-box is needed. Install with cron + rc.local.
 #
-# No python/jq on the device, so: fresh album id per run (previous id tracked in
-# a file), and the /upload body is hand-built with a per-part Content-Length
+# No python/jq on the device, so: fresh album id per run (previous id tracked
+# in a file), and the /upload body is hand-built with a per-part Content-Length
 # (the device's parser requires it; curl -F does not emit it).
+#
+# Re-displays only when the clip actually changed, to avoid a pointless screen
+# blink every cycle. Set FORCE=1 to rebuild regardless (used by the boot run,
+# since album selection does not survive a reboot).
 #
 # Override the source branch/host with:  BASE=https://host/path  sh agent.sh
 BASE="${BASE:-https://raw.githubusercontent.com/Intranet-Explorer/times-frame-dashboard/live}"
 API="http://127.0.0.1:9000"
 WORK=/userdata/whatsnew
 LAST="$WORK/last_album"
+SUMFILE="$WORK/last.sum"
 MP4="$WORK/clip.mp4"
 WEBP="$WORK/cover.webp"
 mkdir -p "$WORK"
@@ -28,6 +33,12 @@ log "fetch $BASE/journal.mp4"
 curl -fsS -m 90 -o "$MP4"  "$BASE/journal.mp4"  || { log "FAIL: mp4 fetch";   exit 1; }
 curl -fsS -m 30 -o "$WEBP" "$BASE/jcover.webp"  || { log "FAIL: cover fetch"; exit 1; }
 log "got $(clen "$MP4") bytes mp4, $(clen "$WEBP") bytes cover"
+
+# 1a. skip the rebuild if the clip is unchanged (boot run sets FORCE=1 to refresh)
+SUM=$(md5sum "$MP4" | cut -d' ' -f1)
+if [ "$FORCE" != "1" ] && [ "$SUM" = "$(cat "$SUMFILE" 2>/dev/null)" ]; then
+  log "clip unchanged; leaving current display"; exit 0
+fi
 
 # 2. unique names for this push
 HASH=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d - | cut -c1-24)
@@ -74,7 +85,7 @@ curl -fsS -m 120 -X POST "$API/upload" \
   --data-binary @"$BODY" >/dev/null || { log "FAIL: upload"; exit 1; }
 sleep 2
 
-# 5. hide clock/weather/title, loop, mute (global config — all fields required)
+# 5. hide clock/weather/title, loop, mute (global config, all fields required)
 post "{\"Command\":\"Photo/SetAlbumConfig\",\"SlideshowTheme\":0,\"SlideshowSpeed\":50,\"SubSlideshowTheme\":0,\"FillFrame\":0,\"FrameBackground\":0,\"DisplayOrder\":3,\"ReversePhotoOrder\":0,\"ShowTitle\":0,\"ShowClock\":0,\"ShowWeather\":0,\"VideoAutoPlay\":1,\"VideoPlayBack\":0,\"VideoAutoMute\":1,\"VideoVolume\":0}" >/dev/null
 
 # 6. select it (twice, to override the native schedule)
@@ -82,8 +93,9 @@ post "{\"Command\":\"Channel/SetClockSelectId\",\"ClockId\":$NEWID}" >/dev/null
 post "{\"Command\":\"Channel/SetClockSelectId\",\"ClockId\":$NEWID}" >/dev/null
 
 echo "$NEWID" > "$LAST"
+echo "$SUM" > "$SUMFILE"
 rm -f "$BODY"
 # 7. tidy staged vi-* except this run's
 find "$WORK" -name 'vi-*.mp4'  ! -name "$VI" -exec rm -f {} + 2>/dev/null
 find "$WORK" -name 'vi-*.webp' ! -name "$VC" -exec rm -f {} + 2>/dev/null
-log "done — showing album $NEWID"
+log "done, showing album $NEWID"
