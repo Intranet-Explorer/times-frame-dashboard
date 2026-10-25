@@ -2,9 +2,9 @@
 
 <img src="assets/badge.svg" alt="built with Claude × Rectangular" height="34">
 
-An animated, cozy **pixel-journal info dashboard** for the [Divoom Times Frame](https://divoom.com/products/times-frame) — a 10.1" 800×1280 transparent desk display. It renders a themed, rotating "What's New in my world" board (AI, security, gaming, making, crypto, weather) as a looping video and pushes it to the frame over the LAN.
+A cozy pixel-journal info board for the [Divoom Times Frame](https://divoom.com/products/times-frame), a 10.1" 800×1280 transparent desk display. It shows a rotating "What's New" view of the things I follow (AI, security, gaming, making, crypto, weather), drawn like a hand-made travel journal and animated on a loop.
 
-The device is treated as a dumb terminal. Everything smart — fetching feeds, laying out the pages, the animation — happens off-device in a small generator. The frame just plays the result.
+The frame ships as a closed appliance. This turns it into a display that renders its own dashboard and pulls fresh copies by itself, with nothing else on the network.
 
 <p>
 <img src="assets/page-ai.png" width="30%" alt="AI & LLM page">
@@ -12,66 +12,70 @@ The device is treated as a dumb terminal. Everything smart — fetching feeds, l
 <img src="assets/page-make.png" width="30%" alt="Make / Tech page">
 </p>
 
+## What it is
+
+The Times Frame is a nice panel wrapped around a locked-down Divoom app: canned dials, a phone app, a cloud account. Out of the box there's no way to put your own live data on it in a style you control.
+
+So I took it apart. Underneath it's an Allwinner board running OpenWrt. Root is reachable over USB, and its local HTTP API (undocumented but real) will load and loop a full-screen video. That was the whole opening. Render the dashboard as a video, get it onto the frame, loop it. The result looks like a little illustrated journal that keeps itself current.
+
 ## How it works
 
+Two halves: a generator that makes the video, and the frame that plays it.
+
 ```
-feeds (RSS/JSON)  ─►  generator  ─►  800×1280 looping MP4  ─►  Times Frame
-  HN, HF, Krebs,      fetch → lay    (pixel journal, page-     (LAN HTTP :9000,
-  Hackaday, crypto,   out HTML →      turns + ambient motion)   plays on loop)
-  weather, …          render video
+feeds (RSS/JSON) -> generator (fetch, lay out, render) -> 800x1280 MP4
+   -> public URL (GitHub raw) -> frame pulls it via its agent -> loops on screen
 ```
 
-1. **Fetch** — pull the latest items from each topic's feed (`src/fetch.py`).
-2. **Build** — compose a pixel-art journal page (parchment on a night sky, PetProject-style) from the data, one spread per topic (`src/build.py` + `src/template.html`). Live data is baked straight into the layout.
-3. **Render** — drive a deterministic animation (page-turns, twinkling stars, hero glow) frame-by-frame with headless Chromium and encode to H.264 (`src/render.py`).
-4. **Push** — upload the MP4 to the frame's photo library over the local API and select it; the frame loops it (`src/push.py`).
+The generator runs off-device.
 
-A small always-on box (a Raspberry Pi) runs this loop every few minutes so the data stays fresh and the frame recovers after a reboot.
+1. **Fetch.** Pull the latest items from each topic's feed (`src/fetch.py`).
+2. **Build.** Compose a pixel-art page from the data: parchment panels on a night sky, one spread per topic (`src/build.py`, `src/template.html`). The data is baked into the layout.
+3. **Render.** Drive a deterministic animation (page-turns, twinkling stars, hero glow) frame by frame in headless Chromium, then encode H.264 (`src/render.py`). The determinism is what makes the loop seamless.
 
-## Why a video?
+The frame runs the last part itself.
 
-The Times Frame can't fetch our images from the internet (its cloud proxy only trusts Divoom's own CDN — see [`docs/API.md`](docs/API.md)), and a *saved* dial can't be pointed at a custom data source. The one thing it does well is **play a looping local video**. So the whole dashboard — custom fonts, parchment, page-turns, ambient motion — is rendered to a video off-device and played as a photo-library clip. This sidesteps every device limitation at once, and gives us total creative freedom: anything renderable in a browser becomes the display.
+4. **Display.** A small shell agent (`src/agent.sh`) lives on the frame. It curls the newest MP4 from a public URL and hands it to the frame's own display API over localhost, as a looping library clip with the stock clock and weather overlays switched off. cron runs it on a schedule, and it survives reboots.
+
+The thing that makes step 4 work is that the frame fetches its own HTTPS. Divoom's cloud proxy only trusts their CDN, but the box's own curl (OpenSSL and a full CA bundle, both already installed) reaches anything. So the frame needs no helper on the network. It pulls the video for itself. No Pi, no bridge, nothing listening. The generator only has to drop a file somewhere public, which today is a GitHub raw URL, and a scheduled job can render straight into it.
+
+## Getting root
+
+Stock, the only path to custom content is Divoom's app. Underneath, it's an ordinary embedded Linux box once you look.
+
+- **OpenWrt on Allwinner** (armv7, kernel 5.4-rt). adb is up over USB and adbd runs as root, so files push and pull with no login.
+- **Writable overlay.** `/` is a union mount. The lower squashfs is read-only, but `/overlay` (ext4) is writable, so `/etc` is editable and edits persist across reboot.
+- **Login was the only lock.** Console root had an unknown password. With the overlay writable that doesn't matter. Pull `/etc/shadow`, write in a hash you own, push it back. Full root, reversible from a backup.
+
+After that it's a normal little machine with curl, cron, and tens of gigs free. The agent is just a script and a crontab line.
+
+> This documents the method, not a working credential. Reset your own device.
 
 ## Design
 
-- **Aesthetic:** a cozy retro-game "travel journal" — warm parchment panels with pixel-art borders and corner brackets, floating on a dark night sky, so the transparent panel reads as depth. Fonts: Toriko (title), Pixelify Sans (headlines), DotGothic16 (labels), VT323 (numerals).
-- **Pages:** themed spreads (AI & LLM, Security, Make/Tech, …) rotate on their own, with a persistent console (clock, weather + forecast, crypto) pinned at the bottom.
-- **Config-driven topics:** add or remove a topic by editing a list — the layout flexes to fit.
+- **Aesthetic.** A retro-game travel journal. Warm parchment with pixel borders and corner brackets, floating on a dark night sky so the transparent glass reads as depth. Fonts: Toriko (title), Pixelify Sans (headlines), DotGothic16 (labels), VT323 (numerals).
+- **Pages.** Themed spreads rotate on their own. A console (clock, weather and forecast, crypto) stays pinned at the bottom.
+- **Topics are a list.** Add or drop one and the layout flexes to fit.
 
 ## Status
 
-Working end to end on hardware (Times Frame, hardware 510 / firmware 510175):
+Working end to end on hardware (hardware 510, firmware 510175):
 
-- [x] Device LAN API mapped and the whole render → push pipeline proven
-- [x] Looping video playback confirmed (ambient motion + page-turns)
-- [x] Live feeds, article images, hero cards, 30fps
-- [x] Device clock/weather overlay suppressed for a clean canvas
+- [x] Local API mapped, full render to display pipeline proven
+- [x] Root and a persistent on-device agent. The frame self-fetches and updates with nothing else on the network
+- [x] Looping playback, live feeds, article images, 30 fps
+- [x] Stock clock and weather overlay suppressed for a clean canvas
 
 ## Roadmap
 
-- [ ] **The keeper** — run the loop on a Raspberry Pi (fetch → render → push every few minutes, reboot recovery)
-- [ ] **LLM summaries** — a local model (Ollama) turns each article into a readable one-liner, so items are self-contained on a non-interactive screen
-- [ ] **Themed pages with unique animations** — crypto (live charts, fear/greed gauge, ticker tape), PC gaming / emulation, gaming leaks & rumors
-- [ ] **Broken-up floating cards** — separate the UI into floating panels so the animated sky shows through (lean into the transparent panel)
-- [ ] **A mascot** — a little pixel creature wandering the margins, reacting to the feed
-- [ ] **Cloud option** — host the generator + a shareable web version (Azure), with the Pi as a thin render/push relay
+- [ ] **Floating cards.** Break the layout into panels so the night sky shows through, leaning into the transparent glass.
+- [ ] **More pages, more motion.** Crypto (live charts, fear/greed gauge, ticker), PC gaming and emulation, leaks and rumors, each with its own animation.
+- [ ] **LLM summaries.** A local model distills each item to a self-contained line, since you can't tap the screen.
+- [ ] **A mascot.** A pixel creature wandering the margins.
+- [ ] **Scheduled render.** A CI job renders and publishes the clip on its own, so the whole thing runs with no always-on hardware.
 
-## Running it (dev)
+## Notes & credits
 
-```bash
-pip install playwright pillow && playwright install chromium   # one-time
-# ffmpeg required on PATH
-python3 src/fetch.py          # -> data.json (+ img/)
-python3 src/build.py          # data.json -> journal.html
-python3 src/render.py         # journal.html -> journal.mp4
-python3 src/push.py <frame-ip>  # upload + display on the frame
-```
-
-Find the frame's IP from your router, or via Divoom's LAN-membership probe:
-`curl https://app.divoom-gz.com/Device/ReturnSameLANDevice`.
-
-## Credits
-
-- Device API behavior documented in [`docs/API.md`](docs/API.md), building on the community reverse-engineering effort (notably [dragonpaw/divoom](https://github.com/dragonpaw/divoom) and Divoom's own [DivoomDevelop](https://github.com/DivoomDevelop) tooling).
-- Fonts are third-party; see [`fonts/README.md`](fonts/README.md) for sources and licenses.
+- Device behavior is documented in [`docs/API.md`](docs/API.md), building on community reverse-engineering and Divoom's own [DivoomDevelop](https://github.com/DivoomDevelop) tooling.
+- Fonts are third-party. See [`fonts/README.md`](fonts/README.md).
 - Built by **Rectangular** with **Claude**.
