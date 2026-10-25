@@ -1,0 +1,10 @@
+# generated artifacts
+data.json
+journal.html
+journal*.mp4
+*.webp
+frames/
+img/
+__pycache__/
+.DS_Store
+.env

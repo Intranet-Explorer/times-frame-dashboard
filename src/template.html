@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Pixelify;src:url('fonts/PixelifySans-latin-400.woff2')}
+@font-face{font-family:VT323;src:url('fonts/VT323-latin-400.woff2')}
+@font-face{font-family:DotGothic;src:url('fonts/DotGothic16-latin-400.woff2')}
+@font-face{font-family:Toriko;src:url('fonts/Toriko.ttf')}
+:root{--parch:#efdcb4;--parch2:#e6cf9c;--parch3:#dcc088;--edge:#5b3f2e;--bevel:#8a6240;--bracket:#e7a775;
+--ink:#3d3026;--muted:#8a755a;--line:#cdb488;--orange:#b24a18;--teal:#2b7a8c;--mag:#9c4382;--green:#2b7549;--gold:#8a6508;--blue:#3a5a8c;--bad:#b3372e}
+*{box-sizing:border-box;margin:0;padding:0}html,body{width:800px;height:1280px}
+body{font-family:Pixelify,monospace;background:radial-gradient(130% 75% at 50% 4%,#444a76,#2a2d4e 46%,#1b1e3a);position:relative;overflow:hidden}
+#stars span{position:absolute;border-radius:50%;background:#eef0ff}
+.hills{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(#1b1e36,#141730);opacity:.92;
+clip-path:polygon(0 65%,140px 65%,140px 45%,280px 45%,280px 60%,430px 60%,430px 35%,600px 35%,600px 55%,720px 55%,720px 48%,800px 48%,800px 100%,0 100%)}
+.page{position:absolute;inset:22px;background:var(--parch);border:7px solid var(--edge);
+box-shadow:inset 0 0 0 3px var(--bevel),7px 7px 0 rgb(8 6 18/55%);padding:20px 22px;display:flex;flex-direction:column}
+.cx{position:absolute;width:20px;height:20px;z-index:3}
+.cx.tl{top:14px;left:14px;border-top:5px solid var(--bracket);border-left:5px solid var(--bracket)}
+.cx.tr{top:14px;right:14px;border-top:5px solid var(--bracket);border-right:5px solid var(--bracket)}
+.cx.bl{bottom:14px;left:14px;border-bottom:5px solid var(--bracket);border-left:5px solid var(--bracket)}
+.cx.br{bottom:14px;right:14px;border-bottom:5px solid var(--bracket);border-right:5px solid var(--bracket)}
+.plaque{background:var(--parch2);border:3px solid var(--edge);box-shadow:3px 3px 0 rgb(42 36 51/20%);padding:10px 15px;display:flex;align-items:center;justify-content:space-between}
+.plaque h1{font-family:Toriko;font-size:36px;color:var(--ink);line-height:.9}
+.plaque .r{display:flex;align-items:center;gap:11px}
+.wxchip{background:var(--blue);color:#fff;font-family:VT323;font-size:25px;padding:3px 10px 1px;white-space:nowrap}
+.plaque .day{font-family:DotGothic;font-size:13px;color:var(--orange);letter-spacing:2px;text-align:right;line-height:1.5}
+.cap{font-family:DotGothic;font-size:14px;color:var(--muted);letter-spacing:2px;margin:9px 2px 6px;text-transform:uppercase}
+#plabel{color:var(--orange)}#cur{color:var(--orange)}
+#feed{flex:1;overflow:hidden;position:relative}
+#track{display:flex;height:100%;will-change:transform}
+.pg{height:100%;display:flex;flex-direction:column;gap:11px;padding:2px 0}
+/* hero */
+.hero{flex:1.5;border:3px solid var(--edge);box-shadow:3px 3px 0 rgb(42 36 51/18%);background:var(--parch2);display:flex;flex-direction:column;overflow:hidden}
+.hero .banner{flex:1;min-height:0;background-size:cover;background-position:center;border-bottom:3px solid var(--edge);position:relative;display:flex;align-items:center;justify-content:center}
+.hero .banner .emblem{font-family:VT323;font-size:110px;line-height:1;color:var(--edge);opacity:.28}
+.hero.o .banner{background-color:#e8c9a0}.hero.t .banner{background-color:#bfd6d6}.hero.d .banner{background-color:#e6d49a}.hero.m .banner{background-color:#dcc0cf}
+.hero.noimg{flex:1.0}
+.hero.noimg .banner{background-image:radial-gradient(var(--line) 1.6px,transparent 1.6px);background-size:22px 22px;background-color:#e8cba2}
+.hero .tag{position:absolute;top:9px;left:9px;font-family:DotGothic;font-size:12px;letter-spacing:1px;color:#fff;background:var(--orange);padding:4px 9px;text-transform:uppercase}
+.hero.t .tag{background:var(--teal)}.hero.d .tag{background:var(--gold)}.hero.m .tag{background:var(--mag)}
+.hero .cap2{flex:none;padding:10px 14px 12px}
+.hero .ttl{font-family:Pixelify;font-size:25px;font-weight:600;color:var(--ink);line-height:1.12;
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hero .det{font-family:DotGothic;font-size:13px;color:var(--muted);margin-top:6px}
+/* rows */
+.rows{flex:2.3;display:flex;flex-direction:column}
+.row{flex:1;display:flex;gap:14px;padding:4px 2px;align-items:center;min-height:0}
+.rows .row:not(:last-child){border-bottom:2px dashed var(--line)}
+.thumb{flex:none;width:108px;height:72px;border:3px solid var(--edge);background-size:cover;background-position:center;background-color:var(--parch3)}
+.stamp{flex:none;width:54px;height:54px;background:var(--parch3);border:3px solid var(--edge);display:flex;align-items:center;justify-content:center;font-family:VT323;font-size:30px;color:var(--ink)}
+.stamp.o{color:var(--orange)}.stamp.t{color:var(--teal)}.stamp.m{color:var(--mag)}.stamp.g{color:var(--green)}.stamp.d{color:var(--gold)}.stamp.b{color:var(--blue)}
+.bd{flex:1;min-width:0}
+.lbl{font-family:DotGothic;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange)}
+.lbl.t{color:var(--teal)}.lbl.m{color:var(--mag)}.lbl.g{color:var(--green)}.lbl.d{color:var(--gold)}.lbl.b{color:var(--blue)}
+.ttl2{font-family:Pixelify;font-size:20px;font-weight:600;color:var(--ink);line-height:1.12;margin-top:3px;
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.det2{font-family:DotGothic;font-size:12px;color:var(--muted);margin-top:4px}
+/* console */
+.console{margin-top:12px;background:var(--parch2);border:3px solid var(--edge);box-shadow:3px 3px 0 rgb(42 36 51/20%);padding:12px 15px;display:flex;align-items:center;gap:16px}
+.cclock .big{font-family:VT323;font-size:60px;color:var(--ink);line-height:.74}
+.cclock .dl{font-family:DotGothic;font-size:13px;color:var(--orange);letter-spacing:2px;margin-top:4px}
+.cdiv{width:3px;align-self:stretch;background:var(--line)}
+.cwx{flex:1}.cwx .now{font-family:Pixelify;font-size:19px;color:var(--ink);font-weight:600}
+.fc{display:flex;gap:15px;margin-top:7px}.fc div{font-family:DotGothic;font-size:12px;color:var(--muted);text-align:center;line-height:1.5}.fc b{display:block;color:var(--ink);font-size:13px}
+.cmk{font-family:VT323;font-size:21px;color:var(--ink);margin-top:8px}.cmk small{font-family:DotGothic;font-size:11px;color:var(--muted)}
+#spark{position:absolute}
+</style></head><body>
+<div id="stars"></div><div class="hills"></div>
+<div class="page">
+<span class="cx tl"></span><span class="cx tr"></span><span class="cx bl"></span><span class="cx br"></span>
+<div class="plaque"><h1>What's New</h1><div class="r"><span class="wxchip">%%WXCHIP%%</span><span class="day">%%DOW%%<br>%%MONDAY%%</span></div></div>
+<div class="cap">&#9656; <span id="plabel">AI &amp; LLM</span><span id="cur">_</span></div>
+<div id="feed"><div id="track">%%TRACK%%</div></div>
+<div class="console">
+<div class="cclock"><div class="big">%%CLOCK%%</div><div class="dl">%%DAYSTR%%</div></div>
+<div class="cdiv"></div>
+<div class="cwx"><div class="now">%%NOWWX%%</div><div class="fc">%%FC%%</div>
+<div class="cmk">BTC %%BTC%% &nbsp; ETH %%ETH%% &nbsp; <small>live</small></div></div>
+</div></div>
+<script>
+const LABELS=%%LABELS%%;
+const sw=document.getElementById('stars');const STARS=[];
+for(let i=0;i<95;i++){const s=document.createElement('span');const sz=1+Math.floor(Math.random()*3);
+s.style.width=sz+'px';s.style.height=sz+'px';s.style.left=(Math.random()*800)+'px';s.style.top=(Math.random()*560)+'px';
+sw.appendChild(s);STARS.push({el:s,ph:Math.random()*6.28,sp:1+Math.floor(Math.random()*3)});}
+const feed=document.getElementById('feed'),track=document.getElementById('track');
+let W=feed.clientWidth;[...track.children].forEach(p=>p.style.width=W+'px');track.style.width=(W*4)+'px';
+const heroes=[...document.querySelectorAll('.hero')];
+const T=29.4,dwell=9.0,turn=0.8,seg=dwell+turn;
+function smooth(a){return a*a*(3-2*a);}
+function progress(t){const k=Math.floor(t/seg),local=t-k*seg;if(local<dwell)return k;return k+smooth((local-dwell)/turn);}
+window.setT=function(t){const pr=progress(t);track.style.transform='translateX('+(-pr*W)+'px)';
+ const idx=Math.round(pr)%3;document.getElementById('plabel').textContent=LABELS[idx];
+ document.getElementById('cur').style.visibility=(Math.floor(t*2)%2===0)?'visible':'hidden';
+ for(const s of STARS){const o=0.3+0.5*Math.sin(2*Math.PI*s.sp*(t/T)+s.ph);s.el.style.opacity=Math.max(0,o).toFixed(3);}
+ const g=0.25+0.22*Math.sin(2*Math.PI*(t/T)*2);for(const h of heroes){h.style.boxShadow='3px 3px 0 rgb(42 36 51/18%), 0 0 '+(10+g*34)+'px rgb(231 167 117/'+g.toFixed(3)+')';}
+};
+window.setT(0);
+</script></body></html>
