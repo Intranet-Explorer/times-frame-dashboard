@@ -29,9 +29,9 @@ post(){ curl -fsS -m 15 -X POST "$API/divoom_api" -d "$1"; echo; }
 clen(){ wc -c < "$1" | tr -d ' '; }
 
 # 1. pull the latest rendered clip + cover
-log "fetch $BASE/journal.mp4"
-curl -fsS -m 90 -o "$MP4"  "$BASE/journal.mp4"  || { log "FAIL: mp4 fetch";   exit 1; }
-curl -fsS -m 30 -o "$WEBP" "$BASE/jcover.webp"  || { log "FAIL: cover fetch"; exit 1; }
+log "fetch $BASE/journal.mp4?cb=$(date +%s)"
+curl -fsS -m 90 -o "$MP4"  "$BASE/journal.mp4?cb=$(date +%s)"  || { log "FAIL: mp4 fetch";   exit 1; }
+curl -fsS -m 30 -o "$WEBP" "$BASE/jcover.webp?cb=$(date +%s)"  || { log "FAIL: cover fetch"; exit 1; }
 log "got $(clen "$MP4") bytes mp4, $(clen "$WEBP") bytes cover"
 
 # 1a. skip the rebuild if the clip is unchanged (boot run sets FORCE=1 to refresh)
