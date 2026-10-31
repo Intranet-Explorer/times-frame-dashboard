@@ -1,0 +1,50 @@
+name: Broadcast
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'      # every ~15 min (GitHub may delay)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: broadcast
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install deps + chromium
+        working-directory: pipeline
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Render broadcast from live weather
+        working-directory: pipeline
+        run: node render.mjs
+
+      - name: Publish clip to live branch
+        run: |
+          git config user.name "Intranet-Explorer"
+          git config user.email "3587136+Intranet-Explorer@users.noreply.github.com"
+          cp pipeline/out/journal.mp4 /tmp/journal.mp4
+          cp pipeline/out/jcover.webp /tmp/jcover.webp
+          git checkout --orphan live_pub
+          git rm -rf . >/dev/null 2>&1 || true
+          cp /tmp/journal.mp4 journal.mp4
+          cp /tmp/jcover.webp jcover.webp
+          git add journal.mp4 jcover.webp
+          git commit -m "live: scheduled weather render $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin live_pub:live

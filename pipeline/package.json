@@ -1,0 +1,14 @@
+{
+  "name": "times-frame-pipeline",
+  "private": true,
+  "type": "module",
+  "description": "Renders the Times Frame WeatherStar broadcast clip from live data",
+  "scripts": {
+    "render": "node render.mjs",
+    "render:mock": "node render.mjs --mock"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0",
+    "suncalc": "^1.9.0"
+  }
+}

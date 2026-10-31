@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Star4000;src:url("assets/fonts/Star4000.woff")}
+@font-face{font-family:Star4000L;src:url("assets/fonts/Star4000 Large.woff")}
+@font-face{font-family:Star4000X;src:url("assets/fonts/Star4000 Extended.woff")}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:800px;height:1280px}
+body{position:relative;overflow:hidden;font-family:Star4000,monospace;color:#fff;image-rendering:pixelated;
+  background:linear-gradient(180deg,#3f67c0 0%,#5064ad 18%,#7d6587 36%,#ab7760 54%,#cc7b4c 70%,#e2883a 86%,#cd7739 100%)}
+.glowL{position:absolute;left:-120px;top:42%;width:360px;height:420px;z-index:0;background:radial-gradient(circle,rgba(240,150,70,.4),transparent 70%);filter:blur(10px)}
+.glowR{position:absolute;right:-120px;top:34%;width:360px;height:420px;z-index:0;background:radial-gradient(circle,rgba(240,150,70,.36),transparent 70%);filter:blur(10px)}
+.sh{text-shadow:3px 3px 0 #000}
+.topbar{position:absolute;top:0;left:0;right:0;height:84px;z-index:8;background:linear-gradient(#4a7ce8,#2f5fd0);border-bottom:4px solid #bcd4ff;
+  display:flex;align-items:center;padding:0 0 0 20px;font-family:Star4000X;font-size:40px;color:#fff;white-space:nowrap;overflow:hidden}
+.topbar .tag{color:#ffd400;margin-right:22px;flex:none;z-index:2;background:linear-gradient(#4a7ce8,#2f5fd0);padding-right:8px}
+.tickwrap{flex:1;overflow:hidden;display:flex}
+.tick{white-space:nowrap;padding-right:80px;animation:scroll 24s linear infinite}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.viewport{position:absolute;left:0;right:0;top:84px;bottom:0;z-index:2;overflow:hidden}
+.strip{position:absolute;top:0;left:0;height:100%;display:flex;will-change:transform}
+.screen{width:800px;height:100%;flex:none;position:relative}
+.hdr{position:absolute;left:40px;right:40px;top:22px;display:flex;align-items:flex-start;justify-content:space-between;z-index:3}
+.title{font-family:Star4000X;font-size:48px;line-height:1.0;color:#ffd400}
+.time{font-family:Star4000X;font-size:30px;color:#fff;text-align:right;line-height:1.18}
+.time .d{font-size:26px;color:#ffd400}
+.panel{position:absolute;left:52px;right:52px;top:150px;bottom:34px;
+  background:linear-gradient(180deg,rgba(104,142,216,.56),rgba(72,108,186,.6));
+  border:2px solid rgba(170,200,245,.6);box-shadow:inset 0 0 0 2px rgba(30,45,95,.3), 5px 6px 0 rgba(10,12,40,.35);
+  padding:26px 32px;display:flex;flex-direction:column}
+.loc{font-family:Star4000X;font-size:40px;color:#fff;text-align:center}
+.hero{display:flex;align-items:center;justify-content:center;gap:26px;margin-top:12px}
+.temp{font-family:Star4000L;font-size:142px;line-height:.9;color:#fff}
+.iconwrap{display:flex;flex-direction:column;align-items:center}
+.iconwrap img{width:140px;height:140px;image-rendering:pixelated}
+.cond{font-family:Star4000X;font-size:36px;color:#fff;margin-top:2px;text-align:center}
+.rows{margin-top:24px}
+.row{display:flex;justify-content:space-between;align-items:baseline;font-family:Star4000X;font-size:38px;padding:11px 0;border-bottom:2px solid rgba(160,190,240,.35)}
+.row .l{color:#fff}.row .v{color:#ffd400}
+.obhead,.obrow{display:flex;align-items:baseline;font-family:Star4000X;font-size:34px}
+.obhead{color:#ffd400;font-size:26px;padding-bottom:10px;border-bottom:3px solid rgba(170,200,245,.5);margin-bottom:6px}
+.obrow{padding:12px 0;border-bottom:2px solid rgba(160,190,240,.28)}
+.c-city{flex:1;color:#fff}.c-t{width:70px;text-align:right;color:#fff}
+.c-w{width:208px;text-align:left;padding-left:20px;color:#fff}.c-wd{width:128px;text-align:right;color:#ffd400}
+.fc-row{display:flex;align-items:center;font-family:Star4000X;font-size:40px;padding:16px 0;border-bottom:2px solid rgba(160,190,240,.35)}
+.fc-day{width:120px;color:#ffd400}.fc-ic{width:120px;display:flex;justify-content:center}.fc-ic img{width:92px;height:92px}
+.fc-cond{flex:1;color:#fff;font-size:30px}
+.fc-hl{text-align:right}.fc-hl .hi{color:#fff}.fc-hl .lo{color:#9fc6ff}
+.al-sec{font-family:Star4000X;font-size:30px;color:#8ffdfa;margin:10px 0 6px;letter-spacing:1px}
+.al-row{display:flex;justify-content:space-between;font-family:Star4000X;font-size:40px;color:#fff;padding:12px 0;border-bottom:2px solid rgba(160,190,240,.3)}
+.al-row .v{color:#ffd400}
+.al-moon{display:flex;align-items:center;gap:22px;margin-top:22px}
+.al-moon .mt{font-family:Star4000X;font-size:40px;color:#fff;line-height:1.1}
+.al-moon .mt small{display:block;font-size:28px;color:#ffd400}
+</style></head><body>
+<div class="glowL"></div><div class="glowR"></div>
+<div class="topbar sh"><span class="tag" id="tktag">THE WIRE</span><div class="tickwrap"><div class="tick" id="tk1"></div><div class="tick" id="tk2"></div></div></div>
+<div class="viewport"><div class="strip" id="strip"></div></div>
+<script>
+const D = window.DATA || MOCK();
+function el(t,c,h){const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function hdr(topTitle,botTitle){return `<div class="hdr sh"><div class="title">${topTitle}<br>${botTitle}</div><div class="time"><div class="d">${D.dateShort}</div>${D.date.split(' ').slice(1).join(' ')}</div></div>`;}
+function icon(name){return `assets/icons/${name}`;}
+
+function screenCurrent(){
+  const c=D.current;
+  let rows=`<div class="row"><span class="l">Wind:</span><span class="v">${c.wind}</span></div>`+
+    `<div class="row"><span class="l">Humidity:</span><span class="v">${c.humidity}</span></div>`+
+    `<div class="row"><span class="l">Dewpoint:</span><span class="v">${c.dewpoint}</span></div>`+
+    `<div class="row"><span class="l">Visibility:</span><span class="v">${c.visibility}</span></div>`+
+    `<div class="row"><span class="l">Pressure:</span><span class="v">${c.pressure}</span></div>`;
+  return el('div','screen', hdr('Current','Conditions')+
+    `<div class="panel sh"><div class="loc">${c.loc}</div>`+
+    `<div class="hero"><div class="temp">${c.temp}</div><div class="iconwrap"><img src="${icon(c.icon)}"><div class="cond">${c.cond}</div></div></div>`+
+    `<div class="rows">${rows}</div></div>`);
+}
+function screenObs(){
+  let t=`<div class="obhead"><span class="c-city">&nbsp;</span><span class="c-t">°F</span><span class="c-w">WEATHER</span><span class="c-wd">WIND</span></div>`;
+  for(const o of D.observations) t+=`<div class="obrow"><span class="c-city">${o.city}</span><span class="c-t">${o.t}</span><span class="c-w">${o.w}</span><span class="c-wd">${o.wind}</span></div>`;
+  return el('div','screen', hdr('Latest','Observations')+`<div class="panel sh">${t}</div>`);
+}
+function screenForecast(){
+  let t='';
+  for(const f of D.forecast) t+=`<div class="fc-row"><span class="fc-day">${f.day}</span><span class="fc-ic"><img src="${icon(f.icon)}"></span><span class="fc-cond">${f.cond||''}</span><span class="fc-hl"><span class="hi">${f.hi}</span> <span class="lo">${f.lo}</span></span></div>`;
+  return el('div','screen', hdr('Extended','Forecast')+`<div class="panel sh">${t}</div>`);
+}
+function screenAlmanac(){
+  const a=D.almanac;
+  return el('div','screen', hdr('Almanac','&amp; Sun')+
+    `<div class="panel sh">`+
+    `<div class="al-sec">SUN &mdash; TODAY</div>`+
+    `<div class="al-row"><span>Sunrise</span><span class="v">${a.sunrise}</span></div>`+
+    `<div class="al-row"><span>Sunset</span><span class="v">${a.sunset}</span></div>`+
+    `<div class="al-sec">SUN &mdash; TOMORROW</div>`+
+    `<div class="al-row"><span>Sunrise</span><span class="v">${a.sunriseTom}</span></div>`+
+    `<div class="al-row"><span>Sunset</span><span class="v">${a.sunsetTom}</span></div>`+
+    `<div class="al-sec">MOON</div>`+
+    `<div class="al-moon"><div class="mt">${a.moon}<small>${a.moonFrac} illuminated</small></div></div>`+
+    `</div>`);
+}
+
+const builders=[screenCurrent, screenObs, screenForecast, screenAlmanac];
+const strip=document.getElementById('strip');
+const screens=builders.map(b=>b());
+screens.forEach(s=>strip.appendChild(s));
+strip.appendChild(screens[0].cloneNode(true));   // loop copy
+document.getElementById('tk1').textContent=D.ticker+'   •   ';
+document.getElementById('tk2').textContent=D.ticker+'   •   ';
+
+const SW=800, N=builders.length, dwell=6.5, trans=1.5, seg=dwell+trans, LOOP=N*seg;
+function ease(f){return f<0.5?2*f*f:1-Math.pow(-2*f+2,2)/2;}
+function setT(t){
+  const tt=((t%LOOP)+LOOP)%LOOP, idx=Math.floor(tt/seg), local=tt-idx*seg;
+  let base=idx; if(local>dwell) base=idx+ease((local-dwell)/trans);
+  strip.style.transform='translateX('+(-base*SW)+'px)';
+}
+window.setT=setT; window.LOOP=LOOP; setT(0);
+
+function MOCK(){return {date:'SAT OCT 31',dateShort:'SAT',
+ current:{loc:'MINNEAPOLIS MN',temp:'53°',cond:'Sunny',icon:'Sunny.gif',wind:'E 6',humidity:'70%',dewpoint:'43°',visibility:'10 mi',pressure:'30.41'},
+ forecast:[{day:'SUN',icon:'Partly-Cloudy.gif',cond:'',hi:'55°',lo:'41°'},{day:'MON',icon:'Cloudy.gif',cond:'',hi:'49°',lo:'38°'},{day:'TUE',icon:'Rain.gif',cond:'',hi:'46°',lo:'36°'},{day:'WED',icon:'Sunny.gif',cond:'',hi:'51°',lo:'39°'}],
+ observations:[{city:'DES MOINES',t:59,w:'RAIN',wind:'S 5'},{city:'FARGO',t:51,w:'CLOUDY',wind:'SE 9'},{city:"INT'L FALLS",t:54,w:'SUNNY',wind:'E 1'},{city:'MILWAUKEE',t:62,w:'CLOUDY',wind:'SSE 10'},{city:'MINNEAPOLIS',t:52,w:'CLOUDY',wind:'SE 8'},{city:'OMAHA',t:61,w:'M CLOUDY',wind:'SE 7'},{city:'SIOUX FALLS',t:59,w:'MIST',wind:'SSE 8'},{city:'ST. PAUL',t:53,w:'CLOUDY',wind:'SE 9'}],
+ almanac:{sunrise:'7:50a',sunset:'6:02p',sunriseTom:'7:51a',sunsetTom:'6:01p',moon:'Waning Gibbous',moonFrac:'63%'},
+ ticker:'Updated 1:18pm  •  Now 53° Sunny  •  Today high 55° low 41°  •  Sunset 6:02p  •  Moon Waning Gibbous'};}
+</script>
+</body></html>
