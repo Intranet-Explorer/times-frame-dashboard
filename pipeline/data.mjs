@@ -4,6 +4,7 @@
 // broadcast template renders from. All formatting (units, icons, labels) is
 // done here so the template stays dumb.
 import SunCalc from 'suncalc';
+import { getNews, tickerFrom } from './news.mjs';
 
 const LAT = 44.98, LON = -93.27, TZ = 'America/Chicago';
 const HOME = 'MINNEAPOLIS MN';
@@ -106,15 +107,16 @@ export async function getData(){
 
   const date = DOW[now.getDay()] + ' ' + MON[now.getMonth()] + ' ' + now.getDate();
   const updated = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:TZ}).toLowerCase().replace(' ','');
-  // placeholder ticker until news sources are wired
-  const ticker = [
-    `Updated ${updated}`,
-    `Now ${current.temp} ${current.cond}`,
-    `Today high ${forecast[0]?.hi||''} low ${forecast[0]?.lo||''}`,
-    `Sunrise ${almanac.sunrise}`, `Sunset ${almanac.sunset}`, `Moon ${almanac.moon}`,
-  ].join('  •  ');
 
-  return {date, dateShort:DOW[now.getDay()], current, forecast, observations, almanac, ticker,
+  let news = [];
+  try { console.log('fetching news...'); news = await getNews(); console.log('news topics:', news.map(t=>t.key+':'+t.stories.length).join(' ')); }
+  catch(e){ console.warn('news failed:', e.message); }
+
+  const heads = tickerFrom(news);
+  const wxSummary = `${current.temp} ${current.cond} in Minneapolis`;
+  const ticker = [wxSummary, ...heads].filter(Boolean).join('   •   ') || `Updated ${updated}`;
+
+  return {date, dateShort:DOW[now.getDay()], current, forecast, observations, almanac, news, ticker,
           generated: now.toISOString()};
 }
 

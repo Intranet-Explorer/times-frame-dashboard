@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '*/15 * * * *'      # every ~15 min (GitHub may delay)
   workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths: ['pipeline/**', '.github/workflows/broadcast.yml']
 
 permissions:
   contents: write

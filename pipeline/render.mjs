@@ -28,6 +28,7 @@ async function main(){
   if(data) await page.addInitScript(d=>{window.DATA=d;}, data);
   await page.goto('file://'+join(DIR,'broadcast.html'));
   await page.evaluate(()=>document.fonts.ready);
+  await page.waitForFunction(()=>window.__imgReady===true, {timeout:12000}).catch(()=>console.warn('images: timed out'));
   await page.waitForTimeout(400);
 
   const LOOP = await page.evaluate(()=>window.LOOP);

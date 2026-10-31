@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "playwright": "^1.48.0",
+    "rss-parser": "^3.13.0",
     "suncalc": "^1.9.0"
   }
 }

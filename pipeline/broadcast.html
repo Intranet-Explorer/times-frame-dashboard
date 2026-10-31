@@ -50,6 +50,16 @@ body{position:relative;overflow:hidden;font-family:Star4000,monospace;color:#fff
 .al-moon{display:flex;align-items:center;gap:22px;margin-top:22px}
 .al-moon .mt{font-family:Star4000X;font-size:40px;color:#fff;line-height:1.1}
 .al-moon .mt small{display:block;font-size:28px;color:#ffd400}
+.nimg{position:relative;border:3px solid rgba(170,200,245,.7);height:286px;overflow:hidden;box-shadow:4px 4px 0 rgba(10,12,40,.35);background:rgba(40,70,140,.5)}
+.nimgc{width:100%;height:100%;display:block;image-rendering:pixelated}
+.nimgfall{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:Star4000X;font-size:40px;color:rgba(205,222,255,.75);text-shadow:2px 2px 0 #000}
+.ncat{position:absolute;left:0;top:0;font-family:Star4000X;font-size:24px;padding:4px 13px;z-index:2}
+.nhl{font-family:Star4000X;font-size:40px;line-height:1.05;color:#fff;margin-top:16px}
+.nmeta{font-family:Star4000;font-size:26px;color:#ffd400;margin-top:8px}
+.nalso{font-family:Star4000X;font-size:26px;margin-top:18px;margin-bottom:4px}
+.nrow{display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:2px solid rgba(160,190,240,.3)}
+.nrow .nn{font-family:Star4000X;font-size:28px;flex:none}
+.nrow .ntx{font-family:Star4000X;font-size:28px;color:#fff;line-height:1.06}
 </style></head><body>
 <div class="glowL"></div><div class="glowR"></div>
 <div class="topbar sh"><span class="tag" id="tktag">THE WIRE</span><div class="tickwrap"><div class="tick" id="tk1"></div><div class="tick" id="tk2"></div></div></div>
@@ -97,15 +107,53 @@ function screenAlmanac(){
     `</div>`);
 }
 
-const builders=[screenCurrent, screenObs, screenForecast, screenAlmanac];
+function screenNews(topic){
+  const s=topic.stories||[]; const feat=s[0]||{title:'No stories right now',source:'',time:'',image:null};
+  let also='';
+  for(let i=1;i<s.length;i++) also+=`<div class="nrow"><span class="nn" style="color:${topic.accent}">${i+1}</span><div class="ntx">${s[i].title}</div></div>`;
+  const alsoBlock = s.length>1 ? `<div class="nalso" style="color:${topic.accent}">ALSO IN ${topic.key}</div>${also}` : '';
+  return el('div','screen', hdr('The Wire', topic.label)+
+    `<div class="panel sh" style="padding:22px 28px">`+
+    `<div class="nimg"><span class="ncat" style="background:${topic.accent};color:#09246f">${topic.key}</span>`+
+    `<canvas class="nimgc" width="620" height="280" data-img="${feat.image||''}"></canvas>`+
+    `<div class="nimgfall">${topic.label.toUpperCase()}</div></div>`+
+    `<div class="nhl">${feat.title}</div>`+
+    `<div class="nmeta">${[feat.source,feat.time].filter(Boolean).join(' • ')}</div>`+
+    alsoBlock+`</div>`);
+}
+
 const strip=document.getElementById('strip');
-const screens=builders.map(b=>b());
+const screens=[screenCurrent(), screenObs(), screenForecast(), screenAlmanac()];
+(D.news||[]).forEach(t=>{ if(t.stories && t.stories.length) screens.push(screenNews(t)); });
 screens.forEach(s=>strip.appendChild(s));
 strip.appendChild(screens[0].cloneNode(true));   // loop copy
 document.getElementById('tk1').textContent=D.ticker+'   •   ';
 document.getElementById('tk2').textContent=D.ticker+'   •   ';
 
-const SW=800, N=builders.length, dwell=6.5, trans=1.5, seg=dwell+trans, LOOP=N*seg;
+// pixelate each featured image from its remote url (tainted canvas is fine for screenshots)
+(function loadImages(){
+  const cvs=[...document.querySelectorAll('.nimgc')];
+  let pending=cvs.length; if(!pending){ window.__imgReady=true; return; }
+  const done=()=>{ if(--pending<=0) window.__imgReady=true; };
+  for(const cv of cvs){
+    const url=cv.dataset.img, ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    const fall=cv.parentElement.querySelector('.nimgfall');
+    const fail=()=>{ cv.style.display='none'; if(fall)fall.style.display='flex'; done(); };
+    if(!url){ fail(); continue; }
+    const img=new Image();
+    img.onload=()=>{ try{
+      const sw=130,sh=59,tr=620/280,iw=img.naturalWidth,ih=img.naturalHeight;
+      let sx=0,sy=0,sW=iw,sH=ih; if(iw/ih>tr){ sW=ih*tr; sx=(iw-sW)/2; } else { sH=iw/tr; sy=(ih-sH)/2; }
+      const off=document.createElement('canvas'); off.width=sw; off.height=sh;
+      off.getContext('2d').drawImage(img, sx,sy,sW,sH, 0,0,sw,sh);
+      ctx.drawImage(off, 0,0,sw,sh, 0,0,620,280); done();
+    }catch(e){ fail(); } };
+    img.onerror=fail; img.src=url;
+  }
+  setTimeout(()=>{ window.__imgReady=true; }, 9000);
+})();
+
+const SW=800, N=screens.length, dwell=6.5, trans=1.5, seg=dwell+trans, LOOP=N*seg;
 function ease(f){return f<0.5?2*f*f:1-Math.pow(-2*f+2,2)/2;}
 function setT(t){
   const tt=((t%LOOP)+LOOP)%LOOP, idx=Math.floor(tt/seg), local=tt-idx*seg;
@@ -119,6 +167,11 @@ function MOCK(){return {date:'SAT OCT 31',dateShort:'SAT',
  forecast:[{day:'SUN',icon:'Partly-Cloudy.gif',cond:'',hi:'55°',lo:'41°'},{day:'MON',icon:'Cloudy.gif',cond:'',hi:'49°',lo:'38°'},{day:'TUE',icon:'Rain.gif',cond:'',hi:'46°',lo:'36°'},{day:'WED',icon:'Sunny.gif',cond:'',hi:'51°',lo:'39°'}],
  observations:[{city:'DES MOINES',t:59,w:'RAIN',wind:'S 5'},{city:'FARGO',t:51,w:'CLOUDY',wind:'SE 9'},{city:"INT'L FALLS",t:54,w:'SUNNY',wind:'E 1'},{city:'MILWAUKEE',t:62,w:'CLOUDY',wind:'SSE 10'},{city:'MINNEAPOLIS',t:52,w:'CLOUDY',wind:'SE 8'},{city:'OMAHA',t:61,w:'M CLOUDY',wind:'SE 7'},{city:'SIOUX FALLS',t:59,w:'MIST',wind:'SSE 8'},{city:'ST. PAUL',t:53,w:'CLOUDY',wind:'SE 9'}],
  almanac:{sunrise:'7:50a',sunset:'6:02p',sunriseTom:'7:51a',sunsetTom:'6:01p',moon:'Waning Gibbous',moonFrac:'63%'},
- ticker:'Updated 1:18pm  •  Now 53° Sunny  •  Today high 55° low 41°  •  Sunset 6:02p  •  Moon Waning Gibbous'};}
+ news:[
+  {key:'AI',label:'AI News',accent:'#34d2ff',stories:[{title:'Anthropic ships Opus 4.8, tops agentic benchmarks',source:'HACKER NEWS',time:'3h',image:null},{title:'DeepSeek V4.1-Flash takes #1 on Hugging Face',source:'VENTUREBEAT',time:'5h',image:null},{title:'1-bit LLMs match FP16 quality at 7B scale',source:'ARXIV',time:'8h',image:null}]},
+  {key:'INFOSEC',label:'InfoSec News',accent:'#ff5d6c',stories:[{title:'Critical RCE patched in widely used VPN appliance',source:'BLEEPINGCOMPUTER',time:'2h',image:null},{title:'New ransomware crew targets managed service providers',source:'THE HACKER NEWS',time:'6h',image:null}]},
+  {key:'CRYPTO',label:'Crypto News',accent:'#f7a600',stories:[{title:'Bitcoin holds above $71k as ETF inflows continue',source:'COINDESK',time:'1h',image:null},{title:'Solana sees record daily active addresses',source:'COINTELEGRAPH',time:'4h',image:null}]},
+ ],
+ ticker:'53° Cloudy in Minneapolis   •   Anthropic ships Opus 4.8   •   Critical RCE patched in VPN appliance   •   Bitcoin holds above $71k'};}
 </script>
 </body></html>
