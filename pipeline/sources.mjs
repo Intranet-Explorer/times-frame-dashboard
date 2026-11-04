@@ -42,11 +42,4 @@ export const TOPICS = [
       'https://www.petri.com/feed/',
     ],
   },
-  {
-    key: 'GENERAL', label: 'General News', accent: '#9aa1ab', max: 4,
-    feeds: [
-      'https://feeds.npr.org/1001/rss.xml',
-      'https://feeds.bbci.co.uk/news/rss.xml',
-    ],
-  },
 ];

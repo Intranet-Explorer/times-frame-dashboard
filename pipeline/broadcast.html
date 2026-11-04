@@ -153,7 +153,7 @@ document.getElementById('tk2').textContent=D.ticker+'   •   ';
   setTimeout(()=>{ window.__imgReady=true; }, 9000);
 })();
 
-const SW=800, N=screens.length, dwell=6.5, trans=1.5, seg=dwell+trans, LOOP=N*seg;
+const SW=800, N=screens.length, dwell=9, trans=1.5, seg=dwell+trans, LOOP=N*seg;
 function ease(f){return f<0.5?2*f*f:1-Math.pow(-2*f+2,2)/2;}
 function setT(t){
   const tt=((t%LOOP)+LOOP)%LOOP, idx=Math.floor(tt/seg), local=tt-idx*seg;
