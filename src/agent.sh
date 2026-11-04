@@ -34,10 +34,22 @@ curl -fsS -m 90 -o "$MP4"  "$BASE/journal.mp4?cb=$(date +%s)"  || { log "FAIL: m
 curl -fsS -m 30 -o "$WEBP" "$BASE/jcover.webp?cb=$(date +%s)"  || { log "FAIL: cover fetch"; exit 1; }
 log "got $(clen "$MP4") bytes mp4, $(clen "$WEBP") bytes cover"
 
-# 1a. skip the rebuild if the clip is unchanged (boot run sets FORCE=1 to refresh)
+# 1a. skip the full rebuild if the clip is unchanged (boot run sets FORCE=1).
+#     Still re-assert the album selection every cycle, so a frame that drifted
+#     to another album (reboot, network bounce, native schedule rotation)
+#     returns to the dashboard within one cycle instead of waiting for the clip
+#     to change or a reboot. No re-upload, no album churn; just the same select
+#     call the full path already issues.
 SUM=$(md5sum "$MP4" | cut -d' ' -f1)
 if [ "$FORCE" != "1" ] && [ "$SUM" = "$(cat "$SUMFILE" 2>/dev/null)" ]; then
-  log "clip unchanged; leaving current display"; exit 0
+  KEEP=$(cat "$LAST" 2>/dev/null)
+  if [ -n "$KEEP" ]; then
+    log "clip unchanged; re-pinning album $KEEP"
+    post "{\"Command\":\"Channel/SetClockSelectId\",\"ClockId\":$KEEP}" >/dev/null
+  else
+    log "clip unchanged; no stored album to re-pin"
+  fi
+  exit 0
 fi
 
 # 2. unique names for this push
