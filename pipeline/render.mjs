@@ -56,4 +56,7 @@ async function main(){
   rmSync(FRAMES,{recursive:true,force:true});
   console.log('done ->', join(OUT,'journal.mp4'));
 }
-main().catch(e=>{console.error(e);process.exit(1)});
+// Exit explicitly on success too: Playwright can leave a dangling handle that
+// keeps Node's event loop alive, which hangs the CI step until it is cancelled
+// (clip rendered but never published). Force a clean exit once main resolves.
+main().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)});
