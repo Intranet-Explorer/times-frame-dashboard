@@ -56,7 +56,23 @@ function fmtTime(iso){
   const ap=h>=12?'p':'a'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+ap;
 }
 
-async function j(url){ const r=await fetch(url); if(!r.ok) throw new Error('fetch '+r.status+' '+url); return r.json(); }
+// Fetch JSON with retries + a bounded per-attempt timeout. Open-Meteo is
+// occasionally slow/unreachable from the CI runner; a single timeout used to
+// abort the whole render and leave the frame on a stale clip.
+async function j(url, tries=4){
+  let last;
+  for(let i=0;i<tries;i++){
+    try{
+      const ctrl=new AbortController();
+      const to=setTimeout(()=>ctrl.abort(), 15000);
+      const r=await fetch(url,{signal:ctrl.signal, headers:{'user-agent':'times-frame-dashboard'}});
+      clearTimeout(to);
+      if(!r.ok) throw new Error('fetch '+r.status+' '+url);
+      return await r.json();
+    }catch(e){ last=e; if(i<tries-1) await new Promise(res=>setTimeout(res, 1200*(i+1))); }
+  }
+  throw last;
+}
 
 export async function getData(){
   const now = new Date();
@@ -70,8 +86,12 @@ export async function getData(){
     `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m`+
     `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${encodeURIComponent(TZ)}`;
 
-  const [main, cityRaw] = await Promise.all([j(mainU), j(cityU)]);
-  const cityArr = Array.isArray(cityRaw)?cityRaw:[cityRaw];
+  // Main current+forecast is required (retried). Regional observations are a
+  // nice-to-have: if that call fails, skip it rather than failing the render.
+  const main = await j(mainU);
+  let cityArr = [];
+  try { const cityRaw = await j(cityU); cityArr = Array.isArray(cityRaw)?cityRaw:[cityRaw]; }
+  catch(e){ console.warn('regional fetch failed, observations blank:', e.message); }
 
   const c=main.current, dUnit='°';
   const [condText, condIcon]=wmo(c.weather_code, c.is_day);
