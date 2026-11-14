@@ -12,7 +12,8 @@ import { dirname, join } from 'node:path';
 const LAT = 44.98, LON = -93.27, TZ = 'America/Chicago';
 const HOME = 'MINNEAPOLIS MN';
 const OUTDIR = join(dirname(fileURLToPath(import.meta.url)), 'out');
-// last-good weather payload, carried on the live branch next to the clip
+// last-good weather payload, carried on the live branch next to the clip.
+// Seeded once by hand; thereafter every successful render rewrites it.
 const CACHE_RAW = 'https://raw.githubusercontent.com/Intranet-Explorer/times-frame-dashboard/live/weather_cache.json';
 
 // upper-midwest regional cities for the observations screen
