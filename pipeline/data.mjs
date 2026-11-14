@@ -5,9 +5,15 @@
 // done here so the template stays dumb.
 import SunCalc from 'suncalc';
 import { getNews, tickerFrom } from './news.mjs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const LAT = 44.98, LON = -93.27, TZ = 'America/Chicago';
 const HOME = 'MINNEAPOLIS MN';
+const OUTDIR = join(dirname(fileURLToPath(import.meta.url)), 'out');
+// last-good weather payload, carried on the live branch next to the clip
+const CACHE_RAW = 'https://raw.githubusercontent.com/Intranet-Explorer/times-frame-dashboard/live/weather_cache.json';
 
 // upper-midwest regional cities for the observations screen
 const CITIES = [
@@ -74,6 +80,34 @@ async function j(url, tries=4){
   throw last;
 }
 
+// Weather payloads with a durable fallback. The render must NOT depend on a
+// live Open-Meteo success: GitHub runners periodically can't reach it for a
+// stretch, and a failed render leaves the frame on a stale clip. On success we
+// cache the raw payloads (out/weather_cache.json, which the publish step commits
+// to the live branch); on failure we render from that last-good cache so a clip
+// still publishes with today's date, just with slightly stale numbers.
+async function getWeather(mainU, cityU){
+  let payload;
+  try {
+    const main = await j(mainU);
+    let cityArr = [];
+    try { const c = await j(cityU); cityArr = Array.isArray(c)?c:[c]; }
+    catch(e){ console.warn('regional fetch failed, observations blank:', e.message); }
+    payload = { main, cityArr, at: new Date().toISOString() };
+    console.log('weather: live');
+  } catch(e){
+    console.warn('live weather unreachable, falling back to cache:', e.message);
+    const cache = await j(CACHE_RAW);   // seeded by the last successful run
+    payload = { main: cache.main, cityArr: cache.cityArr || [], at: cache.at };
+    console.log('weather: cached from', cache.at);
+  }
+  try {
+    mkdirSync(OUTDIR, { recursive: true });
+    writeFileSync(join(OUTDIR, 'weather_cache.json'), JSON.stringify(payload));
+  } catch(e){ console.warn('cache write failed:', e.message); }
+  return payload;
+}
+
 export async function getData(){
   const now = new Date();
   const base='https://api.open-meteo.com/v1/forecast';
@@ -86,12 +120,10 @@ export async function getData(){
     `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m`+
     `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${encodeURIComponent(TZ)}`;
 
-  // Main current+forecast is required (retried). Regional observations are a
-  // nice-to-have: if that call fails, skip it rather than failing the render.
-  const main = await j(mainU);
-  let cityArr = [];
-  try { const cityRaw = await j(cityU); cityArr = Array.isArray(cityRaw)?cityRaw:[cityRaw]; }
-  catch(e){ console.warn('regional fetch failed, observations blank:', e.message); }
+  // Live weather with a last-good cache fallback (see getWeather).
+  const wx = await getWeather(mainU, cityU);
+  const main = wx.main;
+  const cityArr = wx.cityArr || [];
 
   const c=main.current, dUnit='°';
   const [condText, condIcon]=wmo(c.weather_code, c.is_day);
